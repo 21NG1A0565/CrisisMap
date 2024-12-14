@@ -185,3 +185,16 @@ This project is licensed under the MIT License.
 
 "# CrisisMap" 
 "# CrisisMap" 
+
+---
+
+## 💬 Contact
+
+For any queries or feedback, feel free to reach out:
+- **Email**: yaddanapallijayaraju@gmail.com
+- **GitHub**: https://github.com/21NG1A0565/
+
+---
+
+### 🌟 If you like this project, please give it a star ⭐ on GitHub!
+
