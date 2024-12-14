@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Notification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/gdashboard">CrisisMap</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/gdashboard">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sendAlert">Send Alert</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/addResource">Add Resource</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/resources">View Resource</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/assignTask">Assign Task</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/viewTasks">View Tasks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/govNotifications">Notifications</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Send Alert</h2>
+        <form id="notificationForm">
+            <input type="hidden" id="postedBy" name="postedBy"> <!-- Username from session -->
+            
+            <div class="mb-3">
+                <label for="title" class="form-label">Alert Title</label>
+                <input type="text" class="form-control" id="title" placeholder="Enter Alert title" required>
+            </div>
+            <div class="mb-3">
+                <label for="message" class="form-label">Alert Message</label>
+                <textarea class="form-control" id="message" rows="4" placeholder="Enter alert message" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="postedType" class="form-label">Alert Type</label>
+                <select class="form-select" id="postedType" required>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                </select>
+            </div>
+            <div class="mb-3" id="postedToContainer" style="display: none;">
+                <label for="postedTo" class="form-label">Posted To</label>
+                <select class="form-select" id="postedTo">
+                    <!-- Options will be dynamically populated -->
+                </select>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Send Alert</button>
+            </div>
+        </form>
+        <div id="response" class="mt-4"></div>
+    </div>
+
+    <script>
+        // Fetch username from session and populate "postedBy"
+        // Fetch username from session
+        fetch('/api/session/username')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('postedBy').value = data.username; // Assuming response is { "username": "user1" }
+            })
+            .catch(error => {
+                console.error('Error fetching session username:', error);
+                alert('Failed to fetch session username. Please log in again.');
+            });
+
+        // Fetch usernames for "postedTo" dropdown
+        fetch('/api/users')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(users => {
+                const postedToDropdown = document.getElementById('postedTo');
+                postedToDropdown.innerHTML = ''; // Clear existing options
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.username; // Assuming user has a "username" field
+                    option.textContent = user.username;
+                    postedToDropdown.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching users:', error);
+                alert('Failed to fetch users for the dropdown.');
+            });
+
+        // Show or hide the "Posted To" field based on notification type
+        document.getElementById('postedType').addEventListener('change', function () {
+            const postedToContainer = document.getElementById('postedToContainer');
+            postedToContainer.style.display = this.value === 'Private' ? 'block' : 'none';
+        });
+
+        // Handle form submission
+        document.getElementById('notificationForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const message = document.getElementById('message').value;
+            const postedBy = document.getElementById('postedBy').value;
+            const postedType = document.getElementById('postedType').value;
+            const postedTo = document.getElementById('postedTo').value || null;
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        message: message,
+                        postedBy: postedBy,
+                        postedTo: postedType === 'Private' ? postedTo : null,
+                        postedType: postedType,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            Notification sent successfully: ${JSON.stringify(responseData)}
+                        </div>`;
+                    document.getElementById('notificationForm').reset();
+                    document.getElementById('postedToContainer').style.display = 'none';
+                } else {
+                    const errorData = await response.json();
+                    responseDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to send notification: ${errorData.error}
+                        </div>`;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message}
+                    </div>`;
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

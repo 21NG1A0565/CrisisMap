@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/ngodashboard">CrisisMap</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngodashboard">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngoReports">Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngoResources">Resources</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngoRequests">Requests</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngoTasks">Tasks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ngoNotifications">Notifications</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">User Submitted Reports</h2>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Action</th>
+                    <th>Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="report, iterStat : ${reports}">
+                    <td th:text="${iterStat.index + 1}"></td>
+                    <td th:text="${report.title}"></td>
+                    <td th:text="${report.location}"></td>
+                    <td th:text="${report.description}"></td>
+                    <td th:text="${report.date}"></td>
+                    <td th:text="${report.status}"></td>
+                    <td th:text="${report.remarks}"></td>
+                    <td>
+                        <form action="/ngoReports/update" method="post" class="d-inline">
+                            <input type="hidden" name="reportId" th:value="${report.id}">
+                            <select name="status" class="form-select form-select-sm d-inline" onchange="this.form.submit()">
+                                <option>Select Choice</option>
+                                <option
+                                        th:each="status : ${T(com.makeskilled.CrisisMap.Entity.Status).values()}"
+                                        th:value="${status}" 
+                                        th:text="${status}" 
+                                        th:selected="${report.status == status}">
+                                </option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="/ngoReports/updateRemarks" method="post" class="d-inline">
+                            <input type="hidden" name="reportId" th:value="${report.id}">
+                            <textarea name="remarks" rows="4" cols="20" class="form-control form-control-sm d-inline"
+                                      th:text="${report.remarks}" placeholder="Add remarks" onchange="this.form.submit()">
+                            </textarea>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
